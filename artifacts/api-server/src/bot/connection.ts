@@ -119,7 +119,7 @@ class BotManager {
 
     // Request pair code after socket is ready
     if (!state.creds.registered) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 3000));
+      await new Promise<void>((res) => setTimeout(res, 3000));
       try {
         const cleanPhone = phone.replace(/[^0-9]/g, "");
         const code = await this.sock!.requestPairingCode(cleanPhone);
@@ -132,7 +132,6 @@ class BotManager {
           user: phone,
           group: null,
         });
-        resolve();
       } catch (err) {
         logger.error({ err }, "Failed to get pair code");
         this.state = "disconnected";
@@ -244,26 +243,28 @@ class BotManager {
 
       if (action === "add" && group.welcome) {
         for (const participant of participants) {
-          const user = db.getUser(participant);
-          const name = user.name ?? participant.split("@")[0];
+          const jid = typeof participant === "string" ? participant : participant.id;
+          const user = db.getUser(jid);
+          const name = user.name ?? jid.split("@")[0];
           const welcomeMsg =
             group.welcomeMsg ??
-            `@${participant.split("@")[0]} bienvenue dans le groupe ! Soyez respectueux.`;
+            `@${jid.split("@")[0]} bienvenue dans le groupe ! Soyez respectueux.`;
           await this.sock?.sendMessage(id, {
             text: welcomeMsg,
-            mentions: [participant],
+            mentions: [jid],
           });
         }
       }
 
       if (action === "remove" && group.goodbye) {
         for (const participant of participants) {
-          const name = participant.split("@")[0];
+          const jid = typeof participant === "string" ? participant : participant.id;
+          const name = jid.split("@")[0];
           const goodbyeMsg =
             group.goodbyeMsg ?? `Au revoir @${name}, bon courage !`;
           await this.sock?.sendMessage(id, {
             text: goodbyeMsg,
-            mentions: [participant],
+            mentions: [jid],
           });
         }
       }
@@ -325,9 +326,8 @@ class BotManager {
 
   private async destroy(): Promise<void> {
     if (this.sock) {
-      this.sock.ev.removeAllListeners();
       try {
-        await this.sock.end(undefined as any);
+        this.sock.end(new Error("Bot destroyed"));
       } catch (_) {}
       this.sock = null;
     }

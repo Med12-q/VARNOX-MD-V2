@@ -5,6 +5,7 @@
 import { Router } from "express";
 import { db } from "../database/db.js";
 import { GetUsersQueryParams, GetUserParams, UpdateUserBody } from "@workspace/api-zod";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.get("/users/:jid", (req, res) => {
 });
 
 // PATCH /api/users/:jid
-router.patch("/users/:jid", (req, res) => {
+router.patch("/users/:jid", requireAuth, (req, res) => {
   const paramsParsed = GetUserParams.safeParse(req.params);
   if (!paramsParsed.success) {
     res.status(400).json({ error: "JID invalide" });

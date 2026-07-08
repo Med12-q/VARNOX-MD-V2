@@ -7,6 +7,7 @@ import { botManager } from "../bot/connection.js";
 import { db } from "../database/db.js";
 import { cleanPhone, isValidPhone } from "../utils/format.js";
 import { RequestPairCodeBody } from "@workspace/api-zod";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get("/bot/status", (_req, res) => {
 });
 
 // POST /api/bot/pair-code
-router.post("/bot/pair-code", async (req, res) => {
+router.post("/bot/pair-code", requireAuth, async (req, res) => {
   const parsed = RequestPairCodeBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Numéro de téléphone invalide" });
@@ -45,27 +46,30 @@ router.post("/bot/pair-code", async (req, res) => {
       expiresIn: 60,
     });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    const msg = err instanceof Error ? err.message : "Erreur interne du serveur";
+    res.status(500).json({ error: msg });
   }
 });
 
 // POST /api/bot/disconnect
-router.post("/bot/disconnect", async (_req, res) => {
+router.post("/bot/disconnect", requireAuth, async (_req, res) => {
   try {
     await botManager.disconnect();
     res.json({ success: true, message: "Bot déconnecté avec succès" });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    const msg = err instanceof Error ? err.message : "Erreur interne du serveur";
+    res.status(500).json({ error: msg });
   }
 });
 
 // POST /api/bot/restart
-router.post("/bot/restart", async (_req, res) => {
+router.post("/bot/restart", requireAuth, async (_req, res) => {
   try {
     await botManager.restart();
     res.json({ success: true, message: "Bot en cours de redémarrage..." });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    const msg = err instanceof Error ? err.message : "Erreur interne du serveur";
+    res.status(500).json({ error: msg });
   }
 });
 

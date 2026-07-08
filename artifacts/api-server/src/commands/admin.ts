@@ -349,13 +349,18 @@ export const commands: Omit<Command, "usageCount">[] = [
         await sock.sendMessage(from, { text: "❌ Veuillez fournir du code à exécuter." });
         return;
       }
+      if (process.env.NODE_ENV === "production") {
+        await sock.sendMessage(from, { text: "⛔ La commande eval est désactivée en production." });
+        return;
+      }
       try {
         // eslint-disable-next-line no-eval
         const result = eval(code);
         const output = typeof result === "object" ? JSON.stringify(result, null, 2) : String(result);
         await sock.sendMessage(from, { text: `✅ *Résultat:*\n\`\`\`\n${output}\n\`\`\`` });
       } catch (err) {
-        await sock.sendMessage(from, { text: `❌ Erreur:\n${String(err)}` });
+        const msg = err instanceof Error ? err.message : "Erreur inconnue";
+        await sock.sendMessage(from, { text: `❌ Erreur:\n${msg}` });
       }
     },
   },

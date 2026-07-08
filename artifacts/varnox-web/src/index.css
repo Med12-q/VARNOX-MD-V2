@@ -3,7 +3,7 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
+@variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -141,7 +141,6 @@
   }
   
   html {
-    @apply dark;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
